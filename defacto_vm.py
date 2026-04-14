@@ -12,10 +12,10 @@ st.markdown("""
     [data-testid="stMetricValue"] { font-size: 32px; font-weight: bold; color: #ff4b4b; }
     .stMetric { border: 1px solid #333; padding: 15px; border-radius: 12px; background-color: rgba(255, 75, 75, 0.02); }
     
-    /* YES İmzası - Sağ Alt Köşe (Floating Neon Effect) */
+/* YES İmzası - Konum Güncellemesi */
     .signature {
         position: fixed;
-        bottom: 20px;
+        bottom: 80px; /* Biraz yukarı kaldırdık (Eskisi 20px idi) */
         right: 30px;
         font-family: 'Inter', sans-serif;
         font-size: 24px;
@@ -23,7 +23,7 @@ st.markdown("""
         letter-spacing: 8px;
         color: #ff4b4b;
         text-shadow: 0 0 10px rgba(255, 75, 75, 0.5);
-        z-index: 100;
+        z-index: 1000; /* Diğer her şeyin önünde olması için artırdık */
         opacity: 0.8;
     }
     
