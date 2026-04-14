@@ -12,19 +12,20 @@ st.markdown("""
     [data-testid="stMetricValue"] { font-size: 32px; font-weight: bold; color: #ff4b4b; }
     .stMetric { border: 1px solid #333; padding: 15px; border-radius: 12px; background-color: rgba(255, 75, 75, 0.02); }
     
-/* YES İmzası - Konum Güncellemesi */
+    /* YES İmzası - KONUM GÜNCELLEMESİ (SOL ALT - MANAGE APP'DEN KURTARILDI) */
     .signature {
         position: fixed;
-        bottom: 80px; /* Biraz yukarı kaldırdık (Eskisi 20px idi) */
-        right: 30px;
+        bottom: 30px;
+        left: 30px; 
         font-family: 'Inter', sans-serif;
-        font-size: 24px;
+        font-size: 26px;
         font-weight: 900;
-        letter-spacing: 8px;
+        letter-spacing: 6px;
         color: #ff4b4b;
-        text-shadow: 0 0 10px rgba(255, 75, 75, 0.5);
-        z-index: 1000; /* Diğer her şeyin önünde olması için artırdık */
+        text-shadow: 0 0 15px rgba(255, 75, 75, 0.7);
+        z-index: 999999;
         opacity: 0.8;
+        pointer-events: none; /* Altındaki butonlara tıklamayı engellemez */
     }
     
     /* Sidebar Alt Bilgi */
@@ -114,7 +115,7 @@ st.sidebar.markdown(f"""
     <div class="sidebar-sig">
         Engineered by<br>
         <span class="yes-brand">YES</span><br>
-        v14.0 | 2026
+        v14.2 | 2026
     </div>
     """, unsafe_allow_html=True)
 
