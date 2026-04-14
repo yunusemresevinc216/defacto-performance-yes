@@ -5,14 +5,11 @@ import numpy as np
 # --- 1. SAYFA AYARLARI ---
 st.set_page_config(page_title="DeFacto Performance AI | YES", layout="wide")
 
-# CSS: YES İmzası ve Modern Stil (2026 Fütüristik Tasarım)
+# CSS: YES İmzası (Sol Alt - Neon)
 st.markdown("""
     <style>
-    /* Ana Başlık ve Metrik Tasarımı */
     [data-testid="stMetricValue"] { font-size: 32px; font-weight: bold; color: #ff4b4b; }
     .stMetric { border: 1px solid #333; padding: 15px; border-radius: 12px; background-color: rgba(255, 75, 75, 0.02); }
-    
-    /* YES İmzası - KONUM GÜNCELLEMESİ (SOL ALT - MANAGE APP'DEN KURTARILDI) */
     .signature {
         position: fixed;
         bottom: 30px;
@@ -25,10 +22,8 @@ st.markdown("""
         text-shadow: 0 0 15px rgba(255, 75, 75, 0.7);
         z-index: 999999;
         opacity: 0.8;
-        pointer-events: none; /* Altındaki butonlara tıklamayı engellemez */
+        pointer-events: none;
     }
-    
-    /* Sidebar Alt Bilgi */
     .sidebar-sig {
         text-align: center;
         margin-top: 50px;
@@ -94,29 +89,28 @@ if uploaded_stock and uploaded_sales:
 
         if st.sidebar.button("🚀 ANALİZİ BAŞLAT"):
             df_stok_raw['KISA_KOD_STOK'] = df_stok_raw[st_sku].apply(get_base_code)
+            # Duplicate sütun ve satırları temizle
             stok_grouped = df_stok_raw.groupby('KISA_KOD_STOK').agg({st_reyon:'sum', st_depo:'sum'}).reset_index()
             df_satis_raw['KISA_KOD_SATIS'] = df_satis_raw[sa_sku].astype(str).str.strip().str.upper()
             
             merged = pd.merge(df_satis_raw, stok_grouped, left_on='KISA_KOD_SATIS', right_on='KISA_KOD_STOK', how='left')
+            
             for c in [sa_rev, sa_qty, st_reyon, st_depo]:
                 merged[c] = pd.to_numeric(merged[c], errors='coerce').fillna(0)
             
             merged['TOPLAM_STOK'] = merged[st_reyon] + merged[st_depo]
             merged['STOK_OMRU_WOC'] = merged.apply(lambda row: row['TOPLAM_STOK'] / row[sa_qty] if row[sa_qty] > 0 else 99, axis=1)
             
+            # ÇÖKME ÖNLEYİCİ: Index ve Duplicate Temizliği
+            merged = merged.reset_index(drop=True)
             st.session_state.df_final = merged
             st.success("Analiz YES motoru ile tamamlandı.")
 
     except Exception as e:
         st.error(f"Hata: {e}")
 
-# Sidebar Alt Bilgi (GÜNCELLENMİŞ YIL 2026)
 st.sidebar.markdown(f"""
-    <div class="sidebar-sig">
-        Engineered by<br>
-        <span class="yes-brand">YES</span><br>
-        v14.2 | 2026
-    </div>
+    <div class="sidebar-sig">Engineered by<br><span class="yes-brand">YES</span><br>v14.3 | 2026</div>
     """, unsafe_allow_html=True)
 
 # --- 4. ANA PANEL ---
@@ -138,7 +132,9 @@ if not st.session_state.df_final.empty:
         st.write("### 🏢 Genel Koleksiyon Durumu")
         line_summary = df.groupby(sa_line).agg({sa_rev:'sum', sa_qty:'sum', 'TOPLAM_STOK':'sum'}).reset_index()
         line_summary['STOK_OMRU'] = line_summary.apply(lambda row: row['TOPLAM_STOK'] / row[sa_qty] if row[sa_qty] > 0 else 99, axis=1)
-        st.dataframe(line_summary.sort_values(by=sa_rev, ascending=False).style.map(color_stok_omru, subset=['STOK_OMRU']).format({sa_rev: "{:,.0f} TL", 'STOK_OMRU': "{:.1f}"}), use_container_width=True)
+        
+        # Styler hatasını önlemek için benzersiz index
+        st.dataframe(line_summary.sort_values(by=sa_rev, ascending=False).reset_index(drop=True).style.map(color_stok_omru, subset=['STOK_OMRU']).format({sa_rev: "{:,.0f} TL", 'STOK_OMRU': "{:.1f}"}), use_container_width=True)
 
     with tab2:
         selected_cat = st.selectbox("Analiz Kategorisi (Sub Division):", df[sa_div].unique())
@@ -148,8 +144,9 @@ if not st.session_state.df_final.empty:
         div_line_sum = div_df.groupby(sa_line).agg({sa_rev:'sum', sa_qty:'sum', 'TOPLAM_STOK':'sum'}).reset_index()
         div_line_sum['SATIŞ PAYI %'] = (div_line_sum[sa_rev] / div_total_rev * 100) if div_total_rev > 0 else 0
         div_line_sum['STOK_OMRU'] = div_line_sum.apply(lambda row: row['TOPLAM_STOK'] / row[sa_qty] if row[sa_qty] > 0 else 99, axis=1)
-        div_line_sum = div_line_sum.sort_values('SATIŞ PAYI %', ascending=False)
-
+        
+        div_line_sum = div_line_sum.sort_values('SATIŞ PAYI %', ascending=False).reset_index(drop=True)
+        
         m1, m2, m3 = st.columns(3)
         m1.metric(f"{selected_cat} Toplam Ciro", f"{div_total_rev:,.0f} TL")
         if not div_line_sum.empty:
@@ -163,6 +160,10 @@ if not st.session_state.df_final.empty:
         search = st.text_input("Aramak istediğiniz ürün veya koleksiyon:").upper()
         if search:
             mask = df.apply(lambda row: row.astype(str).str.contains(search).any(), axis=1)
-            st.dataframe(df[mask][[sa_sku, sa_line, sa_qty, 'TOPLAM_STOK', 'STOK_OMRU_WOC', sa_rev]].style.map(color_stok_omru, subset=['STOK_OMRU_WOC']), use_container_width=True)
+            search_df = df[mask].copy().reset_index(drop=True)
+            if not search_df.empty:
+                st.dataframe(search_df[[sa_sku, sa_line, sa_qty, 'TOPLAM_STOK', 'STOK_OMRU_WOC', sa_rev]].style.map(color_stok_omru, subset=['STOK_OMRU_WOC']), use_container_width=True)
+            else:
+                st.warning("Eşleşme bulunamadı.")
 else:
     st.info("👋 YES Performance AI Platformuna Hoş Geldiniz. Lütfen dosyaları yükleyerek analizi başlatın.")
